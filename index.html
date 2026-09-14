@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALEN MAFFEI PH /// Motorsport Photography</title>
+    <!-- Fuentes: Anton (Titulares) e Inter (Lectura) -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #080808;
+            --text: #ffffff;
+            --accent: #FF003C; /* Rojo carrera / Neón */
+            --font-display: 'Anton', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
+            overflow-x: hidden;
+            border-left: 8px solid var(--accent);
+            border-right: 8px solid var(--accent);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Canvas de Partículas / Tierra */
+        #dust-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Capas sobre las partículas */
+        header, .hero-container, .categories-section, .contact-section, footer, .marquee-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ================= CINTA EN MOVIMIENTO ================= */
+        .marquee-container {
+            width: 100%;
+            background-color: var(--accent);
+            color: #000;
+            overflow: hidden;
+            padding: 8px 0;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .marquee-content {
+            display: inline-block;
+            animation: marquee 18s linear infinite;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ================= NAVEGACIÓN Y LOGO ================= */
+        header {
+            margin-top: 40px;
+            padding: 25px 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-link {
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        .logo-img {
+            height: 75px;
+            width: auto;
+            display: block;
+            filter: drop-shadow(0 0 10px rgba(255, 0, 60, 0.2));
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .logo-link:hover .logo-img {
+            transform: scale(1.04);
+            filter: drop-shadow(0 0 15px rgba(255, 0, 60, 0.6));
+        }
+
+        nav a {
+            color: var(--text);
+            text-decoration: none;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            margin-left: 30px;
+            letter-spacing: 1px;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover { color: var(--accent); }
+
+        /* ================= HERO CONTAINER (CON WIDGET TELEMETRÍA) ================= */
+        .hero-container {
+            padding: 0 50px;
+            margin: 40px 0 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 40px;
+        }
+
+        .hero-title {
+            flex: 1;
+        }
+
+        .hero-title h1 {
+            font-family: var(--font-display);
+            font-size: clamp(3.8rem, 10vw, 9.5rem);
+            line-height: 0.85;
+            text-transform: uppercase;
+            color: transparent;
+            -webkit-text-stroke: 2px var(--text);
+        }
+
+        .hero-title h1 span {
+            color: var(--accent);
+            -webkit-text-stroke: 0;
+            display: block;
+            margin-left: 4vw;
+        }
+
+        .hero-title p {
+            margin-top: 20px;
+            font-size: 0.95rem;
+            color: #888;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Panel Ficha Técnica / Telemetría */
+        .hero-telemetry {
+            min-width: 280px;
+            background: rgba(18, 18, 18, 0.7);
+            border: 1px solid #222;
+            border-left: 4px solid var(--accent);
+            padding: 20px;
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .telemetry-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .telemetry-label {
+            font-size: 0.7rem;
+            color: var(--accent);
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+
+        .telemetry-val {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            color: #e0e0e0;
+        }
+
+        .status-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #00ff66;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #00ff66;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #00ff66;
+            animation: pulse 1.8s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+
+        /* ================= GRID DE CATEGORÍAS (ASIMÉTRICO) ================= */
+        .categories-section {
+            padding: 0 50px 100px;
+        }
+
+        .section-header {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            margin-bottom: 30px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #222;
+            padding-bottom: 10px;
+        }
+
+        .section-header span { color: var(--accent); }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            position: relative;
+            display: block;
+            text-decoration: none;
+            color: var(--text);
+            overflow: hidden;
+            border: 1px solid #222;
+            background-color: #111;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+
+        .card:nth-child(1) { grid-column: span 8; aspect-ratio: 16/9; }
+        .card:nth-child(2) { grid-column: span 4; aspect-ratio: 4/5; }
+        .card:nth-child(3) { grid-column: span 4; aspect-ratio: 4/5; }
+        .card:nth-child(4) { grid-column: span 8; aspect-ratio: 16/9; }
+        .card:nth-child(5) { grid-column: span 6; aspect-ratio: 16/10; }
+        .card:nth-child(6) { grid-column: span 6; aspect-ratio: 16/10; }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(100%) contrast(1.2) brightness(0.7);
+            transition: all 0.5s ease;
+        }
+
+        .card-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 30px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            z-index: 2;
+        }
+
+        .card-tag {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            line-height: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-btn {
+            display: inline-block;
+            margin-top: 15px;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            color: #000;
+            background: var(--accent);
+            padding: 5px 15px;
+            width: fit-content;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 0, 60, 0.2);
+        }
+
+        .card:hover img {
+            filter: grayscale(0%) contrast(1.1) brightness(0.9);
+            transform: scale(1.05);
+        }
+
+        .card:hover .card-btn {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        /* ================= CONTACTO Y REDES ================= */
+        .contact-section {
+            background-color: #0c0c0c;
+            border-top: 2px solid var(--accent);
+            padding: 80px 50px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .contact-info h2 {
+            font-family: var(--font-display);
+            font-size: clamp(3rem, 6vw, 5rem);
+            line-height: 0.9;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .contact-info h2 span { color: var(--accent); }
+
+        .contact-links {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .contact-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px 30px;
+            background-color: #141414;
+            border: 1px solid #222;
+            color: var(--text);
+            text-decoration: none;
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .contact-btn:hover {
+            background-color: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            transform: skewX(-5deg);
+        }
+
+        /* ================= FOOTER ================= */
+        footer {
+            padding: 40px 50px 30px;
+            background: #000;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #555;
+            border-top: 1px solid #151515;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .footer-logo {
+            height: 40px;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer-logo:hover {
+            opacity: 1;
+        }
+
+        footer span { color: var(--text); font-weight: 700; }
+
+        /* ================= RESPONSIVE ================= */
+        @media (max-width: 992px) {
+            .hero-container { flex-direction: column; align-items: flex-start; }
+            .hero-telemetry { width: 100%; }
+            .grid { grid-template-columns: repeat(2, 1fr); }
+            .card:nth-child(n) { grid-column: span 1; aspect-ratio: 4/3; }
+            .contact-section { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 600px) {
+            body { border-width: 4px; }
+            header, .hero-container, .categories-section, .contact-section { padding-left: 20px; padding-right: 20px; }
+            header { flex-direction: column; gap: 20px; align-items: flex-start; }
+            .logo-img { height: 42px; }
+            nav a { margin-left: 0; margin-right: 20px; }
+            .hero-title h1 span { margin-left: 0; }
+            .grid { grid-template-columns: 1fr; }
+            .card:nth-child(n) { grid-column: span 1; aspect-ratio: 3/2; }
+            .card-btn { opacity: 1; transform: translateY(0); }
+            .contact-btn { font-size: 1.3rem; padding: 18px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas para Partículas de Tierra y Chispas -->
+    <canvas id="dust-canvas"></canvas>
+
+    <!-- Ticker / Cinta Superior -->
+    <div class="marquee-container">
+        <div class="marquee-content">
+            /// VALEN MAFFEI PH /// FOTOGRAFÍA DE AUTOMOVILISMO /// NIKON D7100 /// SELECCIONA UNA CATEGORÍA /// DRIFT /// RALLIES /// FÓRMULA /// MOTORSPORT ///
+        </div>
+    </div>
+
+    <!-- Navegación -->
+    <header>
+        <a href="#" class="logo-link">
+            <img src="img_6654.png" alt="VALEN MAFFEI PH Logo" class="logo-img">
+        </a>
+        <nav>
+            <a href="#galerias">GALERÍAS</a>
+            <a href="#contacto">CONTACTO</a>
+        </nav>
+    </header>
+
+    <!-- Hero con Titular y Widget de Telemetría -->
+    <div class="hero-container">
+        <div class="hero-title">
+            <h1>HIGH<span>SPEED</span></h1>
+            <p>Capta la esencia de la velocidad · Equipamiento Nikon D7100</p>
+        </div>
+
+        <!-- Ficha Técnica / HUD de Telemetría -->
+        <div class="hero-telemetry">
+            <div class="telemetry-row">
+                <span class="telemetry-label">DISPONIBILIDAD</span>
+                <span class="telemetry-val status-tag"><span class="status-dot"></span> COBERTURA 2026</span>
+            </div>
+            <div class="telemetry-row">
+                <span class="telemetry-label">ESPECIALIZACIÓN</span>
+                <span class="telemetry-val">PISTA / RALLY / DRIFT</span>
+            </div>
+            <div class="telemetry-row">
+                <span class="telemetry-label">SET-UP</span>
+                <span class="telemetry-val">NIKON D7100 · 24.1 MP</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Categorías / Álbumes -->
+    <section id="galerias" class="categories-section">
+        <h2 class="section-header">CATEGORÍAS <span>///</span></h2>
+        
+        <div class="grid">
+            <a href="album-drift.html" class="card">
+                <img src="https://images.unsplash.com/photo-1616422285623-14ffee31405e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Drift Series">
+                <div class="card-info">
+                    <span class="card-tag">SERIE 01</span>
+                    <h3 class="card-title">KARTING</h3>
+                    <span class="card-btn">EXPLORAR ÁLBUM →</span>
+                </div>
+            </a>
+
+            <a href="album-rally.html" class="card">
+                <img src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Rally WRC">
+                <div class="card-info">
+                    <span class="card-tag">SERIE 02</span>
+                    <h3 class="card-title">RALLY WRC</h3>
+                    <span class="card-btn">EXPLORAR ÁLBUM →</span>
+                </div>
+            </a>
+
+            <a href="album-f1.html" class="card">
+                <img src="https://images.unsplash.com/photo-1536412586419-f55ddbe1e0cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Fórmula 1">
+                <div class="card-info">
+                    <span class="card-tag">SERIE 03</span>
+                    <h3 class="card-title">FÓRMULA 1</h3>
+                    <span class="card-btn">EXPLORAR ÁLBUM →</span>
+                </div>
+            </a>
+
+            <a href="album-motogp.html" class="card">
+                <img src="https://images.unsplash.com/photo-1560126786-905e36814b7e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="MotoGP">
+                <div class="card-info">
+                    <span class="card-tag">SERIE 04</span>
+                    <h3 class="card-title">MOTOGP</h3>
+                    <span class="card-btn">EXPLORAR ÁLBUM →</span>
+                </div>
+            </a>
+
+            <a href="album-pitlane.html" class="card">
+                <img src="https://images.unsplash.com/photo-1610996160161-59da31e9c9c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Pit Lane">
+                <div class="card-info">
+                    <span class="card-tag">SERIE 05</span>
+                    <h3 class="card-title">PIT LANE</h3>
+                    <span class="card-btn">EXPLORAR ÁLBUM →</span>
+                </div>
+            </a>
+
+            <a href="album-trackday.html" class="card">
+                <img src="https://images.unsplash.com/photo-1502877338535-766e1452684a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="Track Day">
+                <div class="card-info">
+                    <span class="card-tag">SERIE 06</span>
+                    <h3 class="card-title">TRACK DAY</h3>
+                    <span class="card-btn">EXPLORAR ÁLBUM →</span>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <!-- Sección de Contacto Directo -->
+    <section id="contacto" class="contact-section">
+        <div class="contact-info">
+            <h2>TRABAJEMOS <span>JUNTOS</span></h2>
+            <p style="color: #777; font-size: 1.1rem; line-height: 1.5;">Disponible para coberturas de eventos, sesiones privadas en pista o licencias de imágenes impresas.</p>
+        </div>
+        <div class="contact-links">
+            <a href="https://instagram.com/valenmaffei.ph" target="_blank" class="contact-btn">
+                <span>INSTAGRAM</span>
+                <span>@valenmaffei.ph ↗</span>
+            </a>
+            <a href="mailto:valenmaffei.ph@gmail.com" class="contact-btn">
+                <span>EMAIL</span>
+                <span>valenmaffei.ph@gmail.com ↗</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <img src="logo.png" alt="VALEN MAFFEI PH" class="footer-logo">
+        <p>&copy; 2026 <span>VALEN MAFFEI PH</span> — Todos los derechos reservados. Fotografías capturadas con Nikon D7100.</p>
+    </footer>
+
+    <!-- Script de Animación de Partículas -->
+    <script>
+        const canvas = document.getElementById('dust-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const particles = [];
+        const particleCount = 95;
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2.5 + 0.5;
+                this.speedX = Math.random() * 2.5 + 1.2;
+                this.speedY = (Math.random() - 0.5) * 1;
+                this.opacity = Math.random() * 0.7 + 0.1;
+                
+                const colors = ['#FF003C', '#d4a373', '#8d99ae', '#b5838d', '#e63946', '#ffffff'];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x > canvas.width) {
+                    this.x = -10;
+                    this.y = Math.random() * canvas.height;
+                }
+                if (this.y < 0 || this.y > canvas.height) {
+                    this.y = Math.random() * canvas.height;
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
