@@ -111,7 +111,7 @@
 
         nav a:hover { color: var(--accent); }
 
-        /* ================= HERO CONTAINER (CON WIDGET TELEMETRÍA) ================= */
+        /* ================= HERO CONTAINER ================= */
         .hero-container {
             padding: 0 50px;
             margin: 40px 0 60px;
@@ -150,7 +150,7 @@
             text-transform: uppercase;
         }
 
-        /* Panel Ficha Técnica / Telemetría */
+        /* Panel Telemetría */
         .hero-telemetry {
             min-width: 280px;
             background: rgba(18, 18, 18, 0.7);
@@ -208,7 +208,21 @@
             100% { opacity: 1; }
         }
 
-        /* ================= GRID DE CATEGORÍAS (ASIMÉTRICO) ================= */
+        /* Botón opcional para activar sensor si el navegador requiere acción explícita */
+        .sensor-btn {
+            display: none;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        /* ================= GRID DE CATEGORÍAS ================= */
         .categories-section {
             padding: 0 50px 100px;
         }
@@ -455,8 +469,9 @@
                 <span class="telemetry-val">PISTA / RALLY / DRIFT</span>
             </div>
             <div class="telemetry-row">
-                <span class="telemetry-label">SET-UP</span>
-                <span class="telemetry-val">NIKON D7100 · 24.1 MP</span>
+                <span class="telemetry-label">INTERACCIÓN</span>
+                <span class="telemetry-val" id="sensor-status">SACUDE O DESLIZA</span>
+                <button id="enable-sensor" class="sensor-btn">ACTIVAR SENSOR</button>
             </div>
         </div>
     </div>
@@ -522,7 +537,7 @@
         </div>
     </section>
 
-    <!-- Sección de Contacto Directo -->
+    <!-- Sección de Contacto -->
     <section id="contacto" class="contact-section">
         <div class="contact-info">
             <h2>TRABAJEMOS <span>JUNTOS</span></h2>
@@ -546,7 +561,7 @@
         <p>&copy; 2026 <span>VALEN MAFFEI PH</span> — Todos los derechos reservados. Fotografías capturadas con Nikon D7100.</p>
     </footer>
 
-    <!-- Script de Animación y Acelerómetro -->
+    <!-- Script de Animación, Acelerómetro y Respaldo Táctil -->
     <script>
         const canvas = document.getElementById('dust-canvas');
         const ctx = canvas.getContext('2d');
@@ -560,7 +575,7 @@
 
         const particles = [];
         const particleCount = 95;
-        let speedMultiplier = 1.0; // Multiplicador dinámico de velocidad
+        let speedMultiplier = 1.0;
 
         class Particle {
             constructor() {
@@ -580,7 +595,6 @@
             }
 
             update() {
-                // Aplicar multiplicador de velocidad impulsado por la agitación
                 this.x += this.speedX * speedMultiplier;
                 this.y += this.speedY * speedMultiplier;
 
@@ -607,61 +621,98 @@
             particles.push(new Particle());
         }
 
-        // ================= DETECCIÓN DE AGITACIÓN / MOVIMIENTO =================
-        let lastX, lastY, lastZ;
-        let lastTime = 0;
-        const SHAKE_THRESHOLD = 18; // Sensibilidad de la agitación
+        // ================= SISTEMA RECALIBRADO DE ACELERÓMETRO =================
+        let lastX = null, lastY = null, lastZ = null;
+        const SHAKE_THRESHOLD = 12; // Sensibilidad ajustada
 
         function handleMotion(e) {
-            const acc = e.accelerationIncludingGravity || e.acceleration;
-            if (!acc) return;
+            const acc = e.acceleration || e.accelerationIncludingGravity;
+            if (!acc || acc.x === null) return;
 
-            const currentTime = Date.now();
-            if ((currentTime - lastTime) > 100) {
-                const diffTime = currentTime - lastTime;
-                lastTime = currentTime;
+            if (lastX !== null) {
+                const deltaX = Math.abs(acc.x - lastX);
+                const deltaY = Math.abs(acc.y - lastY);
+                const deltaZ = Math.abs(acc.z - lastZ);
 
-                const deltaX = Math.abs(acc.x - (lastX || 0));
-                const deltaY = Math.abs(acc.y - (lastY || 0));
-                const deltaZ = Math.abs(acc.z - (lastZ || 0));
+                const totalDelta = deltaX + deltaY + deltaZ;
 
-                const speed = (deltaX + deltaY + deltaZ) / diffTime * 10000;
-
-                if (speed > SHAKE_THRESHOLD) {
-                    // Disparar ráfaga de velocidad (hasta 6x) al agitar
-                    speedMultiplier = Math.min(speedMultiplier + 2.5, 6.0);
+                if (totalDelta > SHAKE_THRESHOLD) {
+                    // Aumentar la aceleración con base en la intensidad de agitación
+                    speedMultiplier = Math.min(speedMultiplier + (totalDelta * 0.12), 7.0);
                 }
-
-                lastX = acc.x;
-                lastY = acc.y;
-                lastZ = acc.z;
             }
+
+            lastX = acc.x;
+            lastY = acc.y;
+            lastZ = acc.z;
         }
 
-        // Solicitar permisos de acelerómetro para iOS si es necesario
-        function initMotion() {
+        // Gestión de permisos para iOS y navegadores modernos
+        const sensorBtn = document.getElementById('enable-sensor');
+        const sensorStatus = document.getElementById('sensor-status');
+
+        function requestSensorPermission() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission()
                     .then(response => {
                         if (response === 'granted') {
                             window.addEventListener('devicemotion', handleMotion, false);
+                            if(sensorBtn) sensorBtn.style.display = 'none';
+                            sensorStatus.textContent = 'ACTIVO (SACUDE/SWIPE)';
+                        } else {
+                            sensorStatus.textContent = 'USAR SWIPE TÁCTIL';
                         }
                     })
-                    .catch(console.error);
+                    .catch(() => {
+                        sensorStatus.textContent = 'USAR SWIPE TÁCTIL';
+                    });
             } else {
                 window.addEventListener('devicemotion', handleMotion, false);
             }
         }
 
-        window.addEventListener('touchstart', initMotion, { once: true });
+        // Mostrar botón en iOS si se requiere confirmación explícita
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            sensorBtn.style.display = 'inline-block';
+            sensorBtn.addEventListener('click', requestSensorPermission);
+        } else {
+            requestSensorPermission();
+        }
 
-        // Bucle Principal de Animación
+        // Solicitar permisos también al primer toque de pantalla
+        window.addEventListener('touchstart', requestSensorPermission, { once: true });
+
+        // ================= RESPALDO TÁCTIL (ACELERACIÓN POR DESLIZAMIENTO) =================
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let lastTouchTime = 0;
+
+        window.addEventListener('touchmove', (e) => {
+            const touch = e.touches[0];
+            const now = Date.now();
+            const dt = now - lastTouchTime;
+
+            if (dt > 0) {
+                const dist = Math.hypot(touch.clientX - lastTouchX, touch.clientY - lastTouchY);
+                const touchSpeed = dist / dt;
+
+                if (touchSpeed > 0.4) {
+                    speedMultiplier = Math.min(speedMultiplier + (touchSpeed * 0.5), 6.0);
+                }
+            }
+
+            lastTouchX = touch.clientX;
+            lastTouchY = touch.clientY;
+            lastTouchTime = now;
+        }, { passive: true });
+
+        // Bucle de Animación
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Retorno paulatino y suave a la velocidad normal (1.0)
+            // Freno paulatino suave de partículas a la velocidad base (1.0)
             if (speedMultiplier > 1.0) {
-                speedMultiplier *= 0.94;
+                speedMultiplier *= 0.95;
                 if (speedMultiplier < 1.0) speedMultiplier = 1.0;
             }
 
