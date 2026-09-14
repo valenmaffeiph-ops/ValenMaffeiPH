@@ -208,20 +208,6 @@
             100% { opacity: 1; }
         }
 
-        /* Botón opcional para activar sensor si el navegador requiere acción explícita */
-        .sensor-btn {
-            display: none;
-            background: var(--accent);
-            color: #000;
-            border: none;
-            padding: 8px 12px;
-            font-family: var(--font-display);
-            font-size: 0.9rem;
-            cursor: pointer;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
         /* ================= GRID DE CATEGORÍAS ================= */
         .categories-section {
             padding: 0 50px 100px;
@@ -470,8 +456,7 @@
             </div>
             <div class="telemetry-row">
                 <span class="telemetry-label">INTERACCIÓN</span>
-                <span class="telemetry-val" id="sensor-status">SACUDE O DESLIZA</span>
-                <button id="enable-sensor" class="sensor-btn">ACTIVAR SENSOR</button>
+                <span class="telemetry-val">SACUDE O DESLIZA</span>
             </div>
         </div>
     </div>
@@ -484,8 +469,8 @@
             <a href="album-drift.html" class="card">
                 <img src="https://images.unsplash.com/photo-1616422285623-14ffee31405e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Drift Series">
                 <div class="card-info">
-                    <span class="card-tag">SERIE 01</span>
-                    <h3 class="card-title">DRIFT</h3>
+                    <span class="card-tag">FEDENOR</span>
+                    <h3 class="card-title">ZONAL</h3>
                     <span class="card-btn">EXPLORAR ÁLBUM →</span>
                 </div>
             </a>
@@ -561,7 +546,7 @@
         <p>&copy; 2026 <span>VALEN MAFFEI PH</span> — Todos los derechos reservados. Fotografías capturadas con Nikon D7100.</p>
     </footer>
 
-    <!-- Script de Animación, Acelerómetro y Respaldo Táctil -->
+    <!-- Script de Animación, Acelerómetro Transparente y Respaldo Táctil -->
     <script>
         const canvas = document.getElementById('dust-canvas');
         const ctx = canvas.getContext('2d');
@@ -621,9 +606,9 @@
             particles.push(new Particle());
         }
 
-        // ================= SISTEMA RECALIBRADO DE ACELERÓMETRO =================
+        // ================= DETECCIÓN DE MOVIMIENTO =================
         let lastX = null, lastY = null, lastZ = null;
-        const SHAKE_THRESHOLD = 12; // Sensibilidad ajustada
+        const SHAKE_THRESHOLD = 11; // Umbral de sensibilidad
 
         function handleMotion(e) {
             const acc = e.acceleration || e.accelerationIncludingGravity;
@@ -637,7 +622,6 @@
                 const totalDelta = deltaX + deltaY + deltaZ;
 
                 if (totalDelta > SHAKE_THRESHOLD) {
-                    // Aumentar la aceleración con base en la intensidad de agitación
                     speedMultiplier = Math.min(speedMultiplier + (totalDelta * 0.12), 7.0);
                 }
             }
@@ -647,42 +631,29 @@
             lastZ = acc.z;
         }
 
-        // Gestión de permisos para iOS y navegadores modernos
-        const sensorBtn = document.getElementById('enable-sensor');
-        const sensorStatus = document.getElementById('sensor-status');
-
-        function requestSensorPermission() {
+        // Inicialización automática e invisible de sensores
+        function startMotionSensors() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission()
                     .then(response => {
                         if (response === 'granted') {
                             window.addEventListener('devicemotion', handleMotion, false);
-                            if(sensorBtn) sensorBtn.style.display = 'none';
-                            sensorStatus.textContent = 'ACTIVO (SACUDE/SWIPE)';
-                        } else {
-                            sensorStatus.textContent = 'USAR SWIPE TÁCTIL';
                         }
                     })
-                    .catch(() => {
-                        sensorStatus.textContent = 'USAR SWIPE TÁCTIL';
-                    });
+                    .catch(() => {});
             } else {
                 window.addEventListener('devicemotion', handleMotion, false);
             }
         }
 
-        // Mostrar botón en iOS si se requiere confirmación explícita
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            sensorBtn.style.display = 'inline-block';
-            sensorBtn.addEventListener('click', requestSensorPermission);
-        } else {
-            requestSensorPermission();
-        }
+        // Activar inmediatamente al cargar la página
+        startMotionSensors();
 
-        // Solicitar permisos también al primer toque de pantalla
-        window.addEventListener('touchstart', requestSensorPermission, { once: true });
+        // Activar también al primer toque/scroll para otorgar permiso en navegadores con restricción de interacción
+        window.addEventListener('touchstart', startMotionSensors, { once: true });
+        window.addEventListener('pointerdown', startMotionSensors, { once: true });
 
-        // ================= RESPALDO TÁCTIL (ACELERACIÓN POR DESLIZAMIENTO) =================
+        // ================= RESPALDO POR DESLIZAMIENTO TÁCTIL =================
         let lastTouchX = 0;
         let lastTouchY = 0;
         let lastTouchTime = 0;
@@ -696,7 +667,7 @@
                 const dist = Math.hypot(touch.clientX - lastTouchX, touch.clientY - lastTouchY);
                 const touchSpeed = dist / dt;
 
-                if (touchSpeed > 0.4) {
+                if (touchSpeed > 0.35) {
                     speedMultiplier = Math.min(speedMultiplier + (touchSpeed * 0.5), 6.0);
                 }
             }
@@ -706,11 +677,11 @@
             lastTouchTime = now;
         }, { passive: true });
 
-        // Bucle de Animación
+        // Bucle Principal de Animación
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Freno paulatino suave de partículas a la velocidad base (1.0)
+            // Freno paulatino de partículas de vuelta a la velocidad base (1.0)
             if (speedMultiplier > 1.0) {
                 speedMultiplier *= 0.95;
                 if (speedMultiplier < 1.0) speedMultiplier = 1.0;
