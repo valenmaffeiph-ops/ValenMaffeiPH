@@ -87,7 +87,7 @@
         }
 
         .logo-img {
-            height: 75px;
+            height: 55px;
             width: auto;
             display: block;
             filter: drop-shadow(0 0 10px rgba(255, 0, 60, 0.2));
@@ -429,7 +429,7 @@
     <!-- Navegación -->
     <header>
         <a href="#" class="logo-link">
-            <img src="img_6654.png" alt="VALEN MAFFEI PH Logo" class="logo-img">
+            <img src="logo.png" alt="VALEN MAFFEI PH Logo" class="logo-img">
         </a>
         <nav>
             <a href="#galerias">GALERÍAS</a>
@@ -470,7 +470,7 @@
                 <img src="https://images.unsplash.com/photo-1616422285623-14ffee31405e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" alt="Drift Series">
                 <div class="card-info">
                     <span class="card-tag">SERIE 01</span>
-                    <h3 class="card-title">KARTING</h3>
+                    <h3 class="card-title">DRIFT</h3>
                     <span class="card-btn">EXPLORAR ÁLBUM →</span>
                 </div>
             </a>
@@ -546,7 +546,7 @@
         <p>&copy; 2026 <span>VALEN MAFFEI PH</span> — Todos los derechos reservados. Fotografías capturadas con Nikon D7100.</p>
     </footer>
 
-    <!-- Script de Animación de Partículas -->
+    <!-- Script de Animación y Acelerómetro -->
     <script>
         const canvas = document.getElementById('dust-canvas');
         const ctx = canvas.getContext('2d');
@@ -560,6 +560,7 @@
 
         const particles = [];
         const particleCount = 95;
+        let speedMultiplier = 1.0; // Multiplicador dinámico de velocidad
 
         class Particle {
             constructor() {
@@ -579,8 +580,9 @@
             }
 
             update() {
-                this.x += this.speedX;
-                this.y += this.speedY;
+                // Aplicar multiplicador de velocidad impulsado por la agitación
+                this.x += this.speedX * speedMultiplier;
+                this.y += this.speedY * speedMultiplier;
 
                 if (this.x > canvas.width) {
                     this.x = -10;
@@ -605,8 +607,64 @@
             particles.push(new Particle());
         }
 
+        // ================= DETECCIÓN DE AGITACIÓN / MOVIMIENTO =================
+        let lastX, lastY, lastZ;
+        let lastTime = 0;
+        const SHAKE_THRESHOLD = 18; // Sensibilidad de la agitación
+
+        function handleMotion(e) {
+            const acc = e.accelerationIncludingGravity || e.acceleration;
+            if (!acc) return;
+
+            const currentTime = Date.now();
+            if ((currentTime - lastTime) > 100) {
+                const diffTime = currentTime - lastTime;
+                lastTime = currentTime;
+
+                const deltaX = Math.abs(acc.x - (lastX || 0));
+                const deltaY = Math.abs(acc.y - (lastY || 0));
+                const deltaZ = Math.abs(acc.z - (lastZ || 0));
+
+                const speed = (deltaX + deltaY + deltaZ) / diffTime * 10000;
+
+                if (speed > SHAKE_THRESHOLD) {
+                    // Disparar ráfaga de velocidad (hasta 6x) al agitar
+                    speedMultiplier = Math.min(speedMultiplier + 2.5, 6.0);
+                }
+
+                lastX = acc.x;
+                lastY = acc.y;
+                lastZ = acc.z;
+            }
+        }
+
+        // Solicitar permisos de acelerómetro para iOS si es necesario
+        function initMotion() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('devicemotion', handleMotion, false);
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                window.addEventListener('devicemotion', handleMotion, false);
+            }
+        }
+
+        window.addEventListener('touchstart', initMotion, { once: true });
+
+        // Bucle Principal de Animación
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Retorno paulatino y suave a la velocidad normal (1.0)
+            if (speedMultiplier > 1.0) {
+                speedMultiplier *= 0.94;
+                if (speedMultiplier < 1.0) speedMultiplier = 1.0;
+            }
+
             particles.forEach(p => {
                 p.update();
                 p.draw();
